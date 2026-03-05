@@ -1,0 +1,2403 @@
+{
+  "name": "Produccion V2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "5642aadc-c445-4bd3-8a9f-6548e8b4c4bf",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -688,
+        368
+      ],
+      "webhookId": "f93efcb7-9827-4ee2-8bf5-d905b112d708",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.message?.chat?.id || $json.callback_query?.message?.chat?.id }}"
+            }
+          ]
+        }
+      },
+      "id": "f25d61ee-61b3-411d-8dbc-2c6baba8b597",
+      "name": "Get State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        368
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentStep = $json.step || 'SHOW_MENU';\nconst msg = $('Telegram Trigger').item.json.message;\nconst callback = $('Telegram Trigger').item.json.callback_query;\n\n// Obtenemos ID y Texto de forma segura\nconst chatId = msg?.chat?.id || callback?.message?.chat?.id;\nconst textInput = msg?.text || ''; \n\n// Normalizamos\nconst text = textInput.trim().toLowerCase();\nconst action = callback?.data || '';\n\n// 1. DETECTOR DE MENÚ (/start, /reset, hola)\nif (text === '/start' || text === '/menu' || text === 'hola' || text === '/reset' || text === 'reset') {\n  return [{json: { next_step: 'SHOW_MENU', chat_id: chatId, text_response: textInput }}];\n}\n\n// 2. BOTONES DEL MENÚ\nif (action === 'accion=crear') {\n    return [{json: { next_step: 'RESET', chat_id: chatId, text_response: textInput }}];\n}\n// --- NUEVO: SI TOCA CONSULTAR ---\nif (action === 'accion=consultar') {\n    return [{json: { next_step: 'ASK_TICKET_ID', chat_id: chatId, text_response: textInput }}];\n}\n\n// 3. SI ESTAMOS ESPERANDO EL NUMERO DE TICKET\n// Si el paso anterior era pedir el ID, lo que escribió ahora es el ID\nif (currentStep === 'WAITING_TICKET_ID') {\n     return [{json: { next_step: 'SEARCH_TICKET', chat_id: chatId, text_response: textInput }}];\n}\n\n// 4. FLUJO NORMAL (Creación de Ticket)\nreturn [{json: { next_step: currentStep, chat_id: chatId, text_response: textInput }}];"
+      },
+      "id": "b4a1e1ab-0534-4c11-a69b-e779acc17868",
+      "name": "Determine Step",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "1928e9ed-4294-486b-a2ed-5bcb78d2aacd",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "RESET",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RESET"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "98eb6d9e-379c-4f78-8be1-a4f9cd9ba1c5",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_NAME",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_NAME"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "f835e883-22cb-4329-96ed-62e23aced0cb",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_ASUNTO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_ASUNTO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "777a01b0-ecbc-4d17-8aef-193f2e878929",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_DESC",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_DESC"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "49fe7053-0383-4f6c-b3fd-2163772a2c28",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_IP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_IP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "9ce5d9f9-6b1b-4e82-9fe8-503e51bc9102",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_PHONE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_PHONE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "5213941b-45b6-42cc-ad9b-8db711930ba8",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_EMAIL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_EMAIL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "efc68789-427a-4ed0-92b7-a5fd2d5553dd",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "WAITING_CC",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WAITING_CC"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "f59ff42f-2c44-4a1f-b87f-145860dc1128",
+                    "leftValue": "={{ $json.next_step }}",
+                    "rightValue": "SHOW_MENU",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SHOW_MENU"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5315b423-430f-4afb-b9ae-beaa68fd5c7d",
+      "name": "Switch Step",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -256,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "step": "WAITING_NAME",
+            "name": "=\"\"",
+            "asunto": "=\"\"",
+            "descripcion": "=\"\"",
+            "ip": "=\"\"",
+            "phone": "=\"\"",
+            "email": "=\"\""
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b6392289-c205-43d7-ae4d-0a80bd810bfc",
+      "name": "Set Step Name",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -496
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "¡Excelente! Vamos a crear tu ticket📝  \n👤 ¿Cuál es tu Nombre y Apellido?",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "2b9a80f6-a223-4566-aea1-da02ec955241",
+      "name": "Ask Name",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        -496
+      ],
+      "webhookId": "47548db6-d7dc-46b0-b0b2-7098735571ba",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "name": "={{ $json.text_response }}",
+            "step": "WAITING_ASUNTO"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "bd4cc2e9-01ad-4b5c-b6cf-8ecadb6653dc",
+      "name": "Save Name",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=¡Un gusto, {{ $('Telegram Trigger').item.json.message.text }}!🤝🏻\n¿Cuál es el Asunto principal de tu consulta?\n💡 Ej: Problema con Impresora, No abre SAP, Sin Internet.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "c38c1f57-1fc9-48f3-ade2-20ec61901158",
+      "name": "Ask Asunto",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -304
+      ],
+      "webhookId": "2cea9f9e-4d51-4f04-bd4b-d56a92ca3146",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "asunto": "={{ $json.text_response }}",
+            "step": "WAITING_DESC"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "525c2477-4fbf-4eeb-b774-fb17704cbb51",
+      "name": "Save Asunto",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        304,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=Entendido {{ $('Get State').item.json.name }}✍🏻\nAhora, por favor describe tu problema con más detalle.\n🔍 Tip: Cuanta más información nos des (códigos de error, qué estabas haciendo antes del fallo), más rápido podremos solucionarlo.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "0a109f2f-4912-40aa-ab39-a87a3cfb249f",
+      "name": "Ask Desc",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        -112
+      ],
+      "webhookId": "1431e5f0-fc20-461f-ab7e-728f08456771",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "descripcion": "={{ $json.text_response }}",
+            "step": "WAITING_IP"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "82f7a331-771b-4c5f-831f-056e6afe303b",
+      "name": "Save Desc",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        528,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=¡Casi listo, {{ $('Get State').item.json.name }}🖥️\n¿Podrías indicarme la IP de tu equipo?\n📌 Ej: 192.168.12.222\n(Si no aplica o no la sabes, simplemente toca el botón \"Omitir\" de abajo 👇🏻).",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Omitir",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {
+          "resize_keyboard": true,
+          "one_time_keyboard": true
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "795a0179-0370-40dd-a293-06b1cc35da11",
+      "name": "Ask IP",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        80
+      ],
+      "webhookId": "0d250856-2ef9-4f86-8bf1-e359234d5636",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "ip": "={{ $json.text_response }}",
+            "step": "WAITING_PHONE"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "206c7fc3-7a4b-4a4c-aecf-f4cb52f4fd09",
+      "name": "Save IP",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        880,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Bien {{ $('Get State').item.json.name }}.\n📱 ¿A qué número de celular podemos contactarte si necesitamos más detalles?\n📌 Formato: 0971 111 111",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "94f8ccbf-9a01-4310-a509-95de6d591511",
+      "name": "Ask Phone",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        208
+      ],
+      "webhookId": "233b4261-1897-412e-a2b2-6383a8e19c34",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "phone": "={{ $json.text_response }}",
+            "step": "WAITING_EMAIL"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9ce0bdc4-c77c-4611-b586-e0781b48b7cc",
+      "name": "Save Phone",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=📧 ¡Último dato! {{ $('Get State').item.json.name }}\n¿Cuál es tu Correo Electrónico Corporativo?\nEj: mgonzalez@hcgrupo.com",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "a411fe5e-8f72-45ac-91f7-7e06b7833c31",
+      "name": "Ask Email",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        416
+      ],
+      "webhookId": "849c8eed-d8b2-4c4b-931b-1ca3367c49c4",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "BOTHBF <soportebot.hbf@gmail.com>",
+        "toEmail": "soporte@hcgrupo.com",
+        "subject": "={{ $json.asunto }} - {{ $json.name }} - [CID:{{ $('Telegram Trigger').item.json.message.chat.id }}]",
+        "html": "=\n<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;line-height:0;font-size:0;color:transparent;\">\n  Ticket –  {{ $json.asunto }} {{ $json.name }}\n</div>\n\n\n<div\n  data-origin=\"Telegram\"\n  data-user=\"@ {{ $('Telegram Trigger').item.json.message.from.first_name }}{{ $('Telegram Trigger').item.json.message.from.last_name }}  \"\n  style=\"display:none;mso-hide:all;max-height:0;overflow:hidden;line-height:0;font-size:0;color:transparent;\">.</div>\n\n<div style=\"max-width:680px;margin:0 auto;font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#111;line-height:1.55;\">\n  <div style=\"border:2px solid #5B3EA4;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05);background:#fff;\">\n\n    \n    <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;background:#f97316;\">\n      <tr>\n        <td style=\"padding:14px 16px;text-align:center;vertical-align:middle;\">\n          <img src=\"https://certificaciones.greatplacetowork.com.py/hubfs/Certificacion/EMPRESAS%20CERTIFICADAS/Heisecke%20y%20Cia/2024/8c276297-6ba2-42da-b407-adda9b587ef4.jpg\"\n               alt=\"Grupo Heisecke\" style=\"display:inline-block;max-height:68px;max-width:100%;border:0;\">\n        </td>\n      </tr>\n    </table>\n\n    \n    <div style=\"padding:18px 22px;border-bottom:2px solid #f97316;\">\n      <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">\n        <tr>\n          <td style=\"padding:8px 0;width:160px;color:#6b7280;\">Nombre completo</td>\n          <td style=\"padding:8px 0;\"><strong>{{ $json.name }}</strong></td>\n        </tr>\n        <tr>\n          <td style=\"padding:8px 0;color:#6b7280;\">Teléfono</td>\n          <td style=\"padding:8px 0;\">{{ $json.phone }}</td>\n        </tr>\n        <tr>\n          <td style=\"padding:8px 0;color:#6b7280;\">Correo</td>\n          <td style=\"padding:8px 0;\">{{ $json.email }}</td>\n        </tr>\n        <tr>\n          <td style=\"padding:8px 0;color:#6b7280;\">Asunto</td>\n          <td style=\"padding:8px 0;\">{{ $json.asunto }}</td>\n        </tr>\n        <tr>\n          <td style=\"padding:8px 0;color:#6b7280;\">IP</td>\n          <td style=\"padding:8px 0;\">{{$json.ip}}</td>\n        </tr>\n      </table>\n    </div>\n\n    \n    <div style=\"padding:18px 22px;border-bottom:2px solid #f97316;\">\n      <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">\n        <tr>\n          <td style=\"padding:8px 0;width:160px;color:#6b7280;vertical-align:top;\">Descripción</td>\n          <td style=\"padding:8px 0;\">\n            <div style=\"border:1px solid #f97316;background:#fff7ed;border-radius:10px;padding:12px;\">\n              <pre style=\"white-space:pre-wrap;margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;font-size:14px;color:#111;\">\n{{ $json.descripcion }}</pre>\n            </div>\n          </td>\n        </tr>\n      </table>\n    </div>\n\n    \n    <table role=\"presentation\" style=\"width:100%;border-collapse:collapse;background:#f9fafb;\">\n      <tr>\n        <td style=\"padding:12px 22px;color:#6b7280;font-size:12px;\">\n          Enviado por BOT-HBF • {{ new Date().toLocaleString('es-PY') }}\n        </td>\n        <td style=\"padding:12px 22px;color:#6b7280;font-size:12px;text-align:right;\">\n          Chat ID: {{$node[\"Telegram Trigger\"].json.message.chat.id}}\n        </td>\n      </tr>\n    </table>\n  </div>\n</div>\n",
+        "options": {
+          "appendAttribution": false,
+          "ccEmail": "={{ (!$('Save CC & Finish').item.json.cc_email || $('Save CC & Finish').item.json.cc_email.toLowerCase() === 'omitir') ? '' : $('Save CC & Finish').item.json.cc_email }}"
+        }
+      },
+      "id": "7253df1d-d5b9-4e7f-b8f0-6351a2d9e3d2",
+      "name": "Send Email Ticket",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        864
+      ],
+      "webhookId": "d8e159ed-125d-44f3-831c-4c4b748abf9b",
+      "credentials": {
+        "smtp": {
+          "id": "TEkz0UR1D77Hrff4",
+          "name": "SMTP BOT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "✅ ¡TICKET CREADO EXITOSAMENTE! 🎉\nHemos registrado tu solicitud en nuestro sistema. ✍🏻\n⏳ Por favor, aguarda un momento...\nEstamos generando tu Número de Ticket oficial. Te lo enviaremos por aquí en unos segundos. 🎫👨🏻‍💻",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "9706e72f-0b7f-4faf-bc29-72c4cdf08bc9",
+      "name": "Send Final Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        2272,
+        864
+      ],
+      "webhookId": "68be50c2-9b50-47d9-b4c2-4788428c090f",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "👋🏻 Buenas, soy BOT-HBF.\nEstoy aquí para ayudarte a registrar tu ticket de manera eficiente.\n👇🏻 Apreta el boton para iniciar:",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📝 Crear ticket",
+                    "additionalFields": {
+                      "callback_data": "accion=crear"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        608
+      ],
+      "id": "698316aa-4f68-40b2-a6d8-ef237809a6ac",
+      "name": "Menu",
+      "webhookId": "39849c91-b376-43f2-a582-5c361a8714a2",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Kln4vvSEWtq0o5YV",
+          "mode": "list",
+          "cachedResultName": "historial_tickets",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/Kln4vvSEWtq0o5YV"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "asunto": "={{ $json.asunto }}",
+            "descripcion": "={{ $json.descripcion }}",
+            "email": "={{ $json.email }}",
+            "ip": "={{ $json.ip }}",
+            "phone": "={{ $json.phone }}",
+            "name": "={{ $json.name }}",
+            "cc_email": "={{ $('Save CC & Finish').item.json.cc_email }}",
+            "chat_id": "={{ $('Save CC & Finish').item.json.chat_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2048,
+        864
+      ],
+      "id": "cf631c6a-a122-4e5b-a85a-05ece03dfb10",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "options": {
+          "customEmailConfig": "=[\"UNSEEN\", [\"SUBJECT\", \"New Ticket\"]]"
+        }
+      },
+      "name": "Email Trigger (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        736
+      ],
+      "id": "da0865fc-adbc-42d9-ae8a-ffa91ce3d0f3",
+      "credentials": {
+        "imap": {
+          "id": "yXvyvDUGLlC7fo24",
+          "name": "IMAP BOT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtenemos el Asunto\nconst subject = $json.subject || '';\n\n// 2. Buscamos el Número de Ticket (Ticket#1234 o #1234)\nconst ticketMatch = subject.match(/Ticket#(\\d+)/i) || subject.match(/#(\\d+)/);\nconst ticketId = ticketMatch ? ticketMatch[1] : 'Pendiente';\n\n// 3. Buscamos el Chat ID Seguro (CID)\n// Buscamos el patrón \"[CID:12345]\" que pusimos en el asunto\nconst idMatch = subject.match(/\\[CID:(\\d+)\\]/);\nconst chatId = idMatch ? idMatch[1] : null;\n\nreturn {\n  json: {\n    ticket_id: ticketId,\n    chat_id: chatId, \n    subject: subject,\n    encontrado: !!chatId // True si lo encontró\n  }\n};"
+      },
+      "name": "Extraer Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        736
+      ],
+      "id": "b2ad5cd4-fcf5-447a-8203-7b14fd86d27d",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "=🔔 Hemos registrado tu solicitud correctamente.\n🎫 Ticket Nro: ¨{{ $json.ticket_id }}¨\n📅 Fecha: {{ new Date().toLocaleDateString('es-PY') }}\n👨🏻‍💻 El equipo de Soporte T.I. ya está al tanto y se pondrá en contacto contigo muy pronto.\n\n¡Gracias por usar BOT-HBF! 🚀",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📝 Crear ticket",
+                    "additionalFields": {
+                      "callback_data": "accion=crear"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Notificar Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        736
+      ],
+      "id": "8d5446a5-e600-4156-8887-abd13b6f5c9a",
+      "webhookId": "285b89a9-2414-4058-8be1-619498c74470",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ ¡Ups! Formato de teléfono incorrecto\nRecuerda usar este formato con espacios: 0971 111 111\nPor favor, intenta de nuevo o toca \"Omitir\" 👇🏻",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        592
+      ],
+      "id": "30b3325a-44a2-45eb-92a0-3528819a57b1",
+      "name": "Error Phone",
+      "webhookId": "1ed1b18f-a404-471c-9c35-4a73ba51ccaf",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ Correo inválido. Asegúrate de incluir el @ y el dominio (ej: mgonzalez@hcgrupo.com). o escribe \"Omitir\" si no tienes.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        816
+      ],
+      "id": "10178360-80ca-4e64-b977-be448ff694d7",
+      "name": "Error Email",
+      "webhookId": "d8689b89-337f-4ead-942b-82efec884ceb",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6db50b60-290c-424b-aa18-70542c595c9b",
+              "leftValue": "={{ $json.text_response }}",
+              "rightValue": "^([0-9\\+\\-\\s]{6,15}|[Oo][Mm][Ii][Tt][Ii][Rr])$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        496
+      ],
+      "id": "df7fbf19-f2e2-4f45-a5f3-33cf1a74f991",
+      "name": "If phone"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6db50b60-290c-424b-aa18-70542c595c9b",
+              "leftValue": "={{ $json.text_response }}",
+              "rightValue": "^([\\w\\-\\.]+@([\\w\\-]+\\.)+[\\w\\-]{2,4}|[Oo][Mm][Ii][Tt][Ii][Rr])$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1440,
+        736
+      ],
+      "id": "adb32b35-c310-4926-a000-0dc7d5627354",
+      "name": "If email"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6db50b60-290c-424b-aa18-70542c595c9b",
+              "leftValue": "={{ $json.text_response.trim() }}",
+              "rightValue": "^((\\d{1,3}\\.){3}\\d{1,3}|[Oo][Mm][Ii][Tt][Ii][Rr])$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        288
+      ],
+      "id": "2db9b160-4d46-47f3-84b5-5668eb847e83",
+      "name": "If ip"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ ¡Ups! Formato de IP inválido\nRecuerda que debe verse algo así: 192.168.1.1\nSi no la sabes, no te preocupes, solo toca \"Omitir\" 👇🏻",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        368
+      ],
+      "id": "991e1a69-6282-4d3b-b3f7-1021d3200f11",
+      "name": "Error ip",
+      "webhookId": "ddeb8c2d-168d-4b38-af39-26e8e27baa5f",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "email": "={{ $json.text_response }}",
+            "step": "WAITING_CC"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c2c78173-7e7a-4031-8044-9e4b0102069f",
+      "name": "Save Email",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Get State').item.json.name }} ¿Deseas poner en copia a alguien? 👥\nEscribe su correo corporativo.\n(Si no deseas copiar a nadie, toca el botón \"Omitir\" 👇🏻).",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Omitir",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {
+          "resize_keyboard": true,
+          "one_time_keyboard": true
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        640
+      ],
+      "id": "719d41c4-bc35-4742-876f-d2693ba9b062",
+      "name": "Ask CC",
+      "webhookId": "d8689b89-337f-4ead-942b-82efec884ceb",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6db50b60-290c-424b-aa18-70542c595c9b",
+              "leftValue": "={{ $json.text_response }}",
+              "rightValue": "^([\\w\\-\\.]+@([\\w\\-]+\\.)+[\\w\\-]{2,4}|[Oo][Mm][Ii][Tt][Ii][Rr])$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1808,
+        960
+      ],
+      "id": "6fd46536-b677-4282-8b9c-4d0e98f707e8",
+      "name": "If cc_email"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "g3UH5cHBClodeGqM",
+          "mode": "list",
+          "cachedResultName": "users_hbf",
+          "cachedResultUrl": "/projects/KfFJHaDCS5tm7mZ1/datatables/g3UH5cHBClodeGqM"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chat_id",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "step": "START",
+            "cc_email": "={{ $json.text_response }}"
+          },
+          "matchingColumns": [
+            "chat_id"
+          ],
+          "schema": [
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "asunto",
+              "displayName": "asunto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "ip",
+              "displayName": "ip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cc_email",
+              "displayName": "cc_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f85c73c3-5f70-465d-bffb-24ff84ad4b4a",
+      "name": "Save CC & Finish",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ Correo inválido. Asegúrate de incluir el @ y el dominio (ej: mgonzalez@hcgrupo.com). o escribe \"Omitir\" si no tienes.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1936,
+        1056
+      ],
+      "id": "e5ad7c83-3d48-463e-807e-c078f548f51c",
+      "name": "Error cc",
+      "webhookId": "d8689b89-337f-4ead-942b-82efec884ceb",
+      "credentials": {
+        "telegramApi": {
+          "id": "eFrnv31DPASicTAc",
+          "name": "API PRODUCCION"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get State": {
+      "main": [
+        [
+          {
+            "node": "Determine Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Step": {
+      "main": [
+        [
+          {
+            "node": "Switch Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Step": {
+      "main": [
+        [
+          {
+            "node": "Set Step Name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Asunto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Desc",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If ip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If phone",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If cc_email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Step Name": {
+      "main": [
+        [
+          {
+            "node": "Ask Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Name": {
+      "main": [
+        [
+          {
+            "node": "Ask Asunto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Asunto": {
+      "main": [
+        [
+          {
+            "node": "Ask Desc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Desc": {
+      "main": [
+        [
+          {
+            "node": "Ask IP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save IP": {
+      "main": [
+        [
+          {
+            "node": "Ask Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Phone": {
+      "main": [
+        [
+          {
+            "node": "Ask Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Ticket": {
+      "main": [
+        [
+          {
+            "node": "Send Final Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Final Confirmation": {
+      "main": [
+        []
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Send Email Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos": {
+      "main": [
+        [
+          {
+            "node": "Notificar Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If phone": {
+      "main": [
+        [
+          {
+            "node": "Save Phone",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If email": {
+      "main": [
+        [
+          {
+            "node": "Save Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If ip": {
+      "main": [
+        [
+          {
+            "node": "Save IP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error ip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Email": {
+      "main": [
+        [
+          {
+            "node": "Ask CC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If cc_email": {
+      "main": [
+        [
+          {
+            "node": "Save CC & Finish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error cc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save CC & Finish": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Telegram": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "availableInMCP": false
+  },
+  "versionId": "72f3eeb5-2531-4d69-a6c8-4aa72500c933",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a1bf14641e7d6ead00e988098bd2cf03aea62927e53c53ff2f3a202403c0fd68"
+  },
+  "id": "bch2gDRnxkZzPf6C",
+  "tags": []
+}
