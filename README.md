@@ -77,14 +77,3 @@ IT Systems Engineer · AI Automation · Grupo Heisecke
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://linkedin.com/in/gonzlezmauri)
 ```
 
-- Click **"Commit changes"**
-
----
-
-**PASO 5 — Agregar las capturas** *(opcional pero recomendado)*
-
-- **"Add file" → "Upload files"**
-- Subí 2 o 3 capturas del flujo en n8n (las que me mandaste antes)
-- Commit con mensaje:
-```
-Add workflow screenshots
